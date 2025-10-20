@@ -1,0 +1,54 @@
+@import './base.css';
+
+#app {
+  width: 100%;
+  margin: 0 auto;
+  font-weight: normal;
+}
+
+a {
+  text-decoration: none;
+  color: var(--color-accent);
+  transition: 0.3s;
+}
+
+a:hover {
+  color: var(--color-accent-dark);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--color-heading);
+  font-weight: 600;
+}
+
+.section {
+  padding: 80px 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.section-title {
+  font-size: 2.5rem;
+  margin-bottom: 3rem;
+  text-align: center;
+  color: var(--color-heading);
+}
+
+.section-title::after {
+  content: '';
+  display: block;
+  width: 60px;
+  height: 4px;
+  background: var(--color-accent);
+  margin: 1rem auto 0;
+}
+
+@media (max-width: 768px) {
+  .section {
+    padding: 60px 20px;
+  }
+  
+  .section-title {
+    font-size: 2rem;
+  }
+}
