@@ -1,0 +1,156 @@
+@import url('/fonts/inter.css');
+:root {
+  /*系统字体*/
+  --app-font-stack-system: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  /*Inter字体*/
+  --app-font-stack-inter: 'InterVariable','Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  /*当前字体栈，入口动态切换*/
+  --app-font-stack: var(--app-font-stack-inter);
+  
+  line-height: 1.5;
+  --app-text-wght: 400;
+  --app-heading-wght: 570; /* 比正文略粗，避免 700 的过粗带来的闪烁与布局抖动 */
+
+  color-scheme: light dark;
+  --app-bg-light: #f8f9fa;
+  --app-bg-dark: #141414;
+  --app-text-light: #222;
+  --app-text-dark: rgba(255,255,255,0.87);
+  --glow-light: rgba(0, 0, 0, 0.678);
+  --glow-dark: rgba(255, 255, 255, 0.644);
+
+  color: var(--app-text-dark);
+  background-color: var(--app-bg-dark);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+}
+a:hover {
+  color: #535bf2;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  font-family: var(--app-font-stack);
+  min-width: 320px;
+  min-height: 100vh;
+  color: var(--app-text-dark);
+  background-color: var(--app-bg-dark);
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: var(--app-text-light);
+    background-color: var(--app-bg-light);
+    --glow:var(--glow-light);
+  }
+  body {
+    color: var(--app-text-light);
+    background-color: var(--app-bg-light);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color: var(--app-text-dark);
+    background-color: var(--app-bg-dark);
+    --glow:var(--glow-dark);
+  }
+  body {
+    color: var(--app-text-dark);
+    background-color: var(--app-bg-dark);
+  }
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+/* 标题使用稍高字重（Inter 可变轴 + 非可变字体回退） */
+h1, h2, h3, h4, h5, h6,
+.ant-typography h1,
+.ant-typography h2,
+.ant-typography h3,
+.ant-typography h4,
+.ant-typography h5,
+.ant-typography h6,
+.ant-typography.ant-typography-title,
+.ant-card-head-title,
+.ant-modal-title,
+.ant-drawer-title,
+.ant-page-header-heading-title,
+.ant-result-title,
+.ant-statistic-title,
+.ant-descriptions-header .ant-descriptions-title,
+.ant-collapse-header,
+.ant-tabs-tab,
+.ant-menu-submenu-title,
+.ant-steps-item-title,
+.ant-table-thead > tr > th,
+.ant-form-item-label > label,
+.ant-list-item-meta-title,
+.ant-alert-message,
+.ant-notification-notice-message,
+.ant-message .ant-message-notice-content,
+.ant-popconfirm-message-title,
+.ant-select-selection-search-input,
+.ant-input-group-addon {
+  /* 变量字体优先 */
+  font-variation-settings: 'wght' var(--app-heading-wght, 570);
+  /* 传统字体回退 */
+  font-weight: 600;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #1a1a1a;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+button:hover {
+  border-color: #646cff;
+}
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+.card {
+  padding: 2em;
+}
+
+#app {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+  a:hover {
+    color: #747bff;
+  }
+  button {
+    background-color: #f9f9f9;
+  }
+}
