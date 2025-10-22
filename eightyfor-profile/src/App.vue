@@ -106,7 +106,7 @@ function toggleLights() {
 function startSpawningBugs() {
   bugs.value = []
   bugSpawnInterval = setInterval(() => {
-    if (bugs.value.length < 5) {
+    if (Math.random() < 0.3 && bugs.value.length < 5) {
       spawnBug()
     }
   }, 3000)
@@ -127,11 +127,12 @@ function spawnBug() {
     x: Math.random() * window.innerWidth,
     y: Math.random() * window.innerHeight,
     rotation: Math.random() * 360,
-    speed: isSmile ? 0 : 0.5 + Math.random() * 1, // 礼物盒不移动
+    speed: isSmile ? 0 : 1.5 + Math.random() * 1, // 礼物盒不移动
     directionX: isSmile ? 0 : (Math.random() - 0.5) * 2,
     directionY: isSmile ? 0 : (Math.random() - 0.5) * 2,
     isSmile: isSmile,
-    emoji: isSmile ? '🎁' : '🪲'
+    emoji: isSmile ? '🎁' : '🪲',
+    isHovered: false // 新增：跟踪 hover 状态
   }
   bugs.value.push(bug)
   if (!isSmile) {
@@ -144,24 +145,30 @@ function animateBug(bug) {
     const bugRef = bugs.value.find(b => b.id === bug.id)
     if (!bugRef) return
     
-    // 更新位置
-    bugRef.x += bugRef.directionX * bugRef.speed
-    bugRef.y += bugRef.directionY * bugRef.speed
-    
-    // 边界检测
-    if (bugRef.x < 0 || bugRef.x > window.innerWidth) {
-      bugRef.directionX *= -1
-      bugRef.x = Math.max(0, Math.min(window.innerWidth, bugRef.x))
-    }
-    if (bugRef.y < 0 || bugRef.y > window.innerHeight) {
-      bugRef.directionY *= -1
-      bugRef.y = Math.max(0, Math.min(window.innerHeight, bugRef.y))
-    }
-    
-    // 随机改变方向
-    if (Math.random() < 0.02) {
-      bugRef.directionX = (Math.random() - 0.5) * 2
-      bugRef.directionY = (Math.random() - 0.5) * 2
+    // 如果虫子被 hover，则停止移动
+    if (!bugRef.isHovered) {
+      // 更新位置
+      bugRef.x += bugRef.directionX * bugRef.speed
+      bugRef.y += bugRef.directionY * bugRef.speed
+      
+      // 计算朝向角度（根据移动方向），额外顺时针旋转90度
+      bugRef.rotation = Math.atan2(bugRef.directionY, bugRef.directionX) * (180 / Math.PI) + 90
+      
+      // 边界检测
+      if (bugRef.x < 0 || bugRef.x > window.innerWidth) {
+        bugRef.directionX *= -1
+        bugRef.x = Math.max(0, Math.min(window.innerWidth, bugRef.x))
+      }
+      if (bugRef.y < 0 || bugRef.y > window.innerHeight) {
+        bugRef.directionY *= -1
+        bugRef.y = Math.max(0, Math.min(window.innerHeight, bugRef.y))
+      }
+      
+      // 随机改变方向
+      if (Math.random() < 0.01) {
+        bugRef.directionX = (Math.random() - 0.5) * 2
+        bugRef.directionY = (Math.random() - 0.5) * 2
+      }
     }
     
     // 强制触发响应式更新
@@ -236,10 +243,14 @@ onUnmounted(() => {
         <div v-for="bug in bugs" :key="bug.id" 
              class="bug"
              @click="removeBug(bug)"
+             @mouseenter="bug.isHovered = true"
+             @mouseleave="bug.isHovered = false"
              :style="{
                left: bug.x + 'px',
                top: bug.y + 'px',
-               transform: 'translate(-50%, -50%)'
+               transform: bug.isSmile 
+                 ? 'translate(-50%, -50%)' 
+                 : `translate(-50%, -50%) rotate(${bug.rotation}deg)`
              }">
           {{ bug.emoji }}
         </div>
