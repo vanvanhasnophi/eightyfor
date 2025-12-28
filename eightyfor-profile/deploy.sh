@@ -15,6 +15,19 @@ RED='\033[0;31m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
+# 清理函数
+cleanup() {
+    # 只有在文件存在时才删除，避免报错
+    if [ -f "$PACKAGE_NAME" ]; then
+        rm "$PACKAGE_NAME"
+    fi
+    # 清理临时 Nginx 配置文件 (假设文件名模式)
+    rm -f *.tmp *.bak
+}
+
+# 注册 trap，在脚本退出 (EXIT) 或被中断 (INT, TERM) 时执行 cleanup
+trap cleanup EXIT INT TERM
+
 echo -e "${GREEN}=================================${NC}"
 echo -e "${GREEN}   Eightyfor 自动化部署脚本      ${NC}"
 echo -e "${GREEN}=================================${NC}"

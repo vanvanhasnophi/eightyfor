@@ -258,7 +258,7 @@ onUnmounted(() => {
     </transition>
     
     <a href="https://github.com/vanvanhasnophi" target="_blank" class="glowable">
-      <img src="/avatar.svg" class="avatar" alt="Avatar" />
+      <img src="/avatar.png" class="avatar" alt="Avatar" />
     </a>
     <div v-show="glowVisible && !glowAttached" class="glow" :style="{
       left: glowPos.x + 'px',
