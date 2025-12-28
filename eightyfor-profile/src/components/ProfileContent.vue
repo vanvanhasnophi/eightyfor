@@ -10,6 +10,8 @@ const count = ref(0)
 
 <template>
   <h1>{{ name }}</h1>
+  Undergraduate in IMIS @ THU<a ref="">Download Resume</a>
+
 
 
 </template>

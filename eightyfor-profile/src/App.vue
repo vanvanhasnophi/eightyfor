@@ -1,5 +1,5 @@
 <script setup>
-import HelloWorld from './components/HelloWorld.vue'
+import ProfileContent from './components/ProfileContent.vue'
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -267,12 +267,12 @@ onUnmounted(() => {
       transform: `translate(-50%, -50%) scale(${glowScale})`
     }"></div>
   </div>
-  <HelloWorld name="Vincent Chen" />
+  <ProfileContent name="Vincent Chen 陈宇凡" />
 </template>
 
 <style scoped>
 .avatar {
-  height: 6em;
+  height: 8em;
   padding: 1.5em;
   will-change: filter;
   transition: filter 300ms;
