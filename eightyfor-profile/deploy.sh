@@ -60,6 +60,25 @@ echo "打包完成: $PACKAGE_NAME"
 # 4. 获取部署配置
 echo -e "\n${YELLOW}[4/6] 配置部署信息${NC}"
 
+CONFIG_FILE=".deploy.config"
+LOADED_CONFIG="false"
+
+# 检查是否存在配置文件
+if [ -f "$CONFIG_FILE" ]; then
+    echo -e "${YELLOW}检测到保存的部署配置 ($CONFIG_FILE)${NC}"
+    read -p "是否加载保存的配置? (y/n) " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        source "$CONFIG_FILE"
+        LOADED_CONFIG="true"
+        echo "已加载配置:"
+        echo "  服务器 IP: $SERVER_IP"
+        echo "  用户名: $SERVER_USER"
+        echo "  项目名称: $PROJECT_NAME"
+        echo "  部署路径: $REMOTE_PATH"
+    fi
+fi
+
 # 自动查找 Nginx 配置文件
 # 查找 deploy 目录下的第一个文件
 NGINX_LOCAL_FILE=$(ls "$DEPLOY_DIR" | head -n 1)
@@ -89,13 +108,17 @@ if [ -z "$SERVER_PASSWORD" ]; then
 fi
 
 # 默认使用文件名作为项目名建议，但允许修改
-DEFAULT_PROJECT_NAME="eightyfor"
-read -p "请输入项目名称 (用于目录名, 默认 $DEFAULT_PROJECT_NAME): " PROJECT_NAME
-PROJECT_NAME=${PROJECT_NAME:-$DEFAULT_PROJECT_NAME}
+if [ -z "$PROJECT_NAME" ]; then
+    DEFAULT_PROJECT_NAME="eightyfor"
+    read -p "请输入项目名称 (用于目录名, 默认 $DEFAULT_PROJECT_NAME): " PROJECT_NAME
+    PROJECT_NAME=${PROJECT_NAME:-$DEFAULT_PROJECT_NAME}
+fi
 
-DEFAULT_REMOTE_PATH="/var/www/$PROJECT_NAME"
-read -p "请输入远程部署路径 (默认 $DEFAULT_REMOTE_PATH): " REMOTE_PATH
-REMOTE_PATH=${REMOTE_PATH:-$DEFAULT_REMOTE_PATH}
+if [ -z "$REMOTE_PATH" ]; then
+    DEFAULT_REMOTE_PATH="/var/www/$PROJECT_NAME"
+    read -p "请输入远程部署路径 (默认 $DEFAULT_REMOTE_PATH): " REMOTE_PATH
+    REMOTE_PATH=${REMOTE_PATH:-$DEFAULT_REMOTE_PATH}
+fi
 
 NGINX_AVAILABLE="/etc/nginx/sites-available"
 NGINX_ENABLED="/etc/nginx/sites-enabled"
@@ -108,6 +131,22 @@ echo -e "项目名称:   ${GREEN}$PROJECT_NAME${NC}"
 echo -e "部署路径:   ${GREEN}$REMOTE_PATH${NC}"
 echo -e "Nginx配置:  ${GREEN}$NGINX_AVAILABLE/$NGINX_REMOTE_CONFIG_NAME${NC}"
 echo -e "------------------------------------------------"
+
+# 询问是否保存配置
+if [ "$LOADED_CONFIG" != "true" ]; then
+    read -p "是否保存当前配置以便下次使用? (y/n) " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        echo "SERVER_IP=\"$SERVER_IP\"" > "$CONFIG_FILE"
+        echo "SERVER_USER=\"$SERVER_USER\"" >> "$CONFIG_FILE"
+        echo "SERVER_PASSWORD=\"$SERVER_PASSWORD\"" >> "$CONFIG_FILE"
+        echo "PROJECT_NAME=\"$PROJECT_NAME\"" >> "$CONFIG_FILE"
+        echo "REMOTE_PATH=\"$REMOTE_PATH\"" >> "$CONFIG_FILE"
+        chmod 600 "$CONFIG_FILE"
+        echo -e "${GREEN}配置已保存至 $CONFIG_FILE${NC}"
+    fi
+fi
+
 read -p "确认部署? (y/n) " -n 1 -r
 echo
 if [[ ! $REPLY =~ ^[Yy]$ ]]; then
@@ -136,7 +175,8 @@ cp "$NGINX_CONF_PATH" "$TEMP_NGINX_CONF"
 # 使用 sed 替换 root 路径
 # 注意：路径中可能包含 /，需要转义
 ESCAPED_PATH=$(echo "$REMOTE_PATH" | sed 's/\//\\\//g')
-sed -i "s/root \/usr\/share\/nginx\/html;/root $ESCAPED_PATH;/g" "$TEMP_NGINX_CONF"
+# 使用正则替换任何 root 指令，确保 Nginx 指向正确的部署路径
+sed -i "s/^\(\s*\)root .*;/\1root $ESCAPED_PATH;/g" "$TEMP_NGINX_CONF"
 echo "已更新 Nginx 配置中的 root 路径为: $REMOTE_PATH"
 
 # 定义 SSH 命令前缀 (提前定义以供检查使用)
@@ -315,6 +355,9 @@ REMOTE_SCRIPT="
     fi
     
     echo '--> 解压静态资源'
+    
+    echo '--> [Debug] 解压后目录内容:'
+    echo '$SERVER_PASSWORD' | sudo -S ls -la \"$REMOTE_PATH\"
     echo '$SERVER_PASSWORD' | sudo -S tar -xzf \"$REMOTE_TEMP_DIR/$PACKAGE_NAME\" -C \"$REMOTE_PATH\"
     
     echo '--> 配置 Nginx'
