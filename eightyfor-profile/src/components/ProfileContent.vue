@@ -20,7 +20,7 @@ const copyToClipboard = (text) => {
 
 <template>
   <h1>{{ name }}</h1>
-  Undergraduate in IMIS @ THU&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Download Resume:&nbsp;<a href="./download/resume.pdf" class="glowable">PDF</a>&nbsp;/&nbsp;<a href="./download/resume.html" class="glowable">HTML</a>
+  Undergraduate in IMIS @ THU&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Download Resume:&nbsp;<a href="./download/resume.pdf" class="glowable">PDF</a>&nbsp;/&nbsp;<a href="./download/resume.html.zip" class="glowable">HTML</a>
   <br>
   Contact:&nbsp;<a href="#" @click.prevent="copyToClipboard(mail1)" class="glowable">{{ mail1 }}</a>&nbsp;|&nbsp;<a href="#" @click.prevent="copyToClipboard(mail2)" class="glowable">{{ mail2 }}</a>
 
