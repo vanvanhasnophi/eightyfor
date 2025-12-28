@@ -14,6 +14,8 @@ const controlGlowOpacity = ref(0)
 const glowScale = ref(0.4)
 const lightsOff = ref(false)
 const bugs = ref([])
+const quoteData = ref(null)
+const isLoadingQuote = ref(false)
 let hideTimeout = null
 let bugSpawnInterval = null
 
@@ -66,7 +68,7 @@ function attachGlow(target) {
   // 延迟后渐入控件发光
   setTimeout(() => {
     controlGlowOpacity.value = 1
-    target.style.filter = `drop-shadow(0 0 2em rgba(255,255,255, ${controlGlowOpacity.value * 0.533}))`
+    target.style.filter = `drop-shadow(0 0 5px rgba(255,255,255, ${controlGlowOpacity.value * 0.8})) drop-shadow(0 0 2em rgba(255,255,255, ${controlGlowOpacity.value * 0.5}))`
     target.style.transition = 'filter 200ms ease-out'
   }, 0)
 }
@@ -103,10 +105,88 @@ function toggleLights() {
   }
 }
 
+function showQuote() {
+  isLoadingQuote.value = true
+  
+  const today = new Date()
+  const isAprilFools = today.getMonth() === 3 && today.getDate() === 1
+  
+  if (isAprilFools) {
+    quoteData.value = {
+      content: "You are an idiot!=)",
+      author: "Entity 67"
+    }
+    isLoadingQuote.value = false
+    setTimeout(() => {
+      router.push('/lol')
+    }, 3000)
+    return
+  }
+
+  if (rng.next() < 0.1) {
+    fetch('https://meme-api.com/gimme')
+      .then(response => response.json())
+      .then(data => {
+        quoteData.value = {
+          content: data.title,
+          author: `r/${data.subreddit}`,
+          imageUrl: data.url
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching meme:', error)
+        // Fallback to normal quote if meme fails
+        return fetch('https://api.quotable.io/random')
+          .then(response => response.json())
+          .then(data => {
+            quoteData.value = {
+              content: data.content,
+              author: data.author
+            }
+          })
+      })
+      .finally(() => {
+        isLoadingQuote.value = false
+      })
+    return
+  }
+
+  fetch('https://api.quotable.io/random')
+    .then(response => response.json())
+    .then(data => {
+      quoteData.value = {
+        content: data.content,
+        author: data.author
+      }
+    })
+    .catch(error => {
+      console.error('Error fetching quote:', error)
+      alert('Failed to fetch quote. Please try again later.')
+    })
+    .finally(() => {
+      isLoadingQuote.value = false
+    })
+}
+
+// 简单的伪随机数生成器
+class SeededRandom {
+  constructor(seed) {
+    this.seed = seed;
+  }
+
+  // 生成 0 到 1 之间的随机数
+  next() {
+    const x = Math.sin(this.seed++) * 10000;
+    return x - Math.floor(x);
+  }
+}
+
+const rng = new SeededRandom(Date.now());
+
 function startSpawningBugs() {
   bugs.value = []
   bugSpawnInterval = setInterval(() => {
-    if (Math.random() < 0.3 && bugs.value.length < 5) {
+    if (rng.next() < 0.3 && bugs.value.length < 5) {
       spawnBug()
     }
   }, 3000)
@@ -121,15 +201,15 @@ function stopSpawningBugs() {
 }
 
 function spawnBug() {
-  const isSmile = Math.random() < 0.01 // 1% 概率是礼物盒
+  const isSmile = rng.next() < 0.01 // 1% 概率是礼物盒
   const bug = {
-    id: Date.now() + Math.random(),
-    x: Math.random() * window.innerWidth,
-    y: Math.random() * window.innerHeight,
-    rotation: Math.random() * 360,
-    speed: isSmile ? 0 : 1.5 + Math.random() * 1, // 礼物盒不移动
-    directionX: isSmile ? 0 : (Math.random() - 0.5) * 2,
-    directionY: isSmile ? 0 : (Math.random() - 0.5) * 2,
+    id: Date.now() + rng.next(),
+    x: rng.next() * window.innerWidth,
+    y: rng.next() * window.innerHeight,
+    rotation: rng.next() * 360,
+    speed: isSmile ? 0 : 1.5 + rng.next() * 1, // 礼物盒不移动
+    directionX: isSmile ? 0 : (rng.next() - 0.5) * 2,
+    directionY: isSmile ? 0 : (rng.next() - 0.5) * 2,
     isSmile: isSmile,
     emoji: isSmile ? '🎁' : '🪲',
     isHovered: false // 新增：跟踪 hover 状态
@@ -165,9 +245,9 @@ function animateBug(bug) {
       }
       
       // 随机改变方向
-      if (Math.random() < 0.01) {
-        bugRef.directionX = (Math.random() - 0.5) * 2
-        bugRef.directionY = (Math.random() - 0.5) * 2
+      if (rng.next() < 0.01) {
+        bugRef.directionX = (rng.next() - 0.5) * 2
+        bugRef.directionY = (rng.next() - 0.5) * 2
       }
     }
     
@@ -181,7 +261,7 @@ function animateBug(bug) {
 
 function removeBug(bug) {
   if (bug.isSmile) {
-    // 点击笑脸，导航到 /lol 路由
+    // 点击礼物盒，导航到 /lol 路由
     router.push('/lol')
   } else {
     // 点击虫子，正常移除
@@ -260,14 +340,35 @@ onUnmounted(() => {
     <a href="https://github.com/vanvanhasnophi" target="_blank" class="glowable">
       <img src="/avatar.png" class="avatar" alt="Avatar" />
     </a>
+    
     <div v-show="glowVisible && !glowAttached" class="glow" :style="{
       left: glowPos.x + 'px',
       top: glowPos.y + 'px',
       opacity: glowOpacity,
       transform: `translate(-50%, -50%) scale(${glowScale})`
     }"></div>
+  </div style="">
+  <ProfileContent name="Vincent Chen 陈宇凡" mail1="j13811593@163.com" mail2="chenyufa23@mails.tsinghua.edu.cn" />
+  <div style="text-align: center; margin: 2em;">
+  <a href="./blog" >
+  <button class="primary">Blogs →</button>
+  </a>
+  
+  <transition name="fade" mode="out-in">
+    <div v-if="quoteData" style="margin-left: 1em; display: inline-block; vertical-align: middle; max-width: 600px; text-align: left;">
+      <template v-if="quoteData.imageUrl">
+        <img :src="quoteData.imageUrl" style="max-width: 100%; max-height: 300px; border-radius: 8px; display: block; margin-bottom: 0.5em;" />
+        <span style="opacity: 0.7; font-size: 0.9em;">{{ quoteData.content }} — {{ quoteData.author }}</span>
+      </template>
+      <template v-else>
+        "{{ quoteData.content }}" <br> <span style="opacity: 0.7; font-size: 0.9em;">— {{ quoteData.author }}</span>
+      </template>
+    </div>
+    <button v-else style="margin-left: 1em;" @click="showQuote" :disabled="isLoadingQuote">
+      {{ isLoadingQuote ? 'Loading...' : 'Quote Me' }}
+    </button>
+  </transition>
   </div>
-  <ProfileContent name="Vincent Chen 陈宇凡" />
 </template>
 
 <style scoped>

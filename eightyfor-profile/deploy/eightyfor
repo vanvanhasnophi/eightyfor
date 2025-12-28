@@ -44,6 +44,7 @@ server {
         access_log off;
         log_not_found off;
     }
+
     
     # 日志
     access_log /var/log/nginx/eightyfor.top-access.log;
