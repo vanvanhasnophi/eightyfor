@@ -12,11 +12,15 @@
   --app-heading-wght: 570; /* 比正文略粗，避免 700 的过粗带来的闪烁与布局抖动 */
 
   color-scheme: light dark;
-  --app-bg-light: #f8f9fa;
+  /* 暂时禁用浅色模式 */
+  /* --app-bg-light: #f8f9fa; */
+  --app-bg-light: var(--app-bg-dark);
   --app-bg-dark: #141414;
-  --app-text-light: #222;
+  /* --app-text-light: #222; */
+  --app-text-light: var(--app-text-dark);
   --app-text-dark: rgba(255,255,255,0.87);
-  --glow-light: rgba(0, 0, 0, 0.678);
+  --glow-light: var(--glow-dark);
+  /* --glow-light: rgba(0, 0, 0, 0.678);*/
   --glow-dark: rgba(255, 255, 255, 0.644);
 
   color: var(--app-text-dark);

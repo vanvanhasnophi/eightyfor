@@ -97,7 +97,7 @@ function detachGlow() {
 
 function toggleLights() {
   lightsOff.value = !lightsOff.value
-  
+
   if (lightsOff.value) {
     startSpawningBugs()
   } else {
@@ -107,10 +107,10 @@ function toggleLights() {
 
 function showQuote() {
   isLoadingQuote.value = true
-  
+
   const today = new Date()
   const isAprilFools = today.getMonth() === 3 && today.getDate() === 1
-  
+
   if (isAprilFools) {
     quoteData.value = {
       content: "You are an idiot!=)",
@@ -124,24 +124,30 @@ function showQuote() {
   }
 
   if (rng.next() < 0.1) {
-    fetch('https://meme-api.com/gimme')
+    fetch('https://tea.qingnian8.com/api/geng/random?pageSize=1')
       .then(response => response.json())
       .then(data => {
+        // Parse API response which looks like: { errCode, errMsg, data: [ ... ] }
+        const payload = data && data.data ? data : { data };
+        const item = Array.isArray(payload.data) ? payload.data[0] : (payload.data || {});
         quoteData.value = {
-          content: data.title,
-          author: `r/${data.subreddit}`,
-          imageUrl: data.url
+          // show some identifier or fallback text as content
+          content: item._id || item.createTime || 'Meme',
+          // use the item's author or the top-level author
+          author: item.author || payload.author || 'Meme',
+          // image URL field in the example is `url`
+          imageUrl: item.url || item.imageUrl || ''
         }
       })
       .catch(error => {
         console.error('Error fetching meme:', error)
         // Fallback to normal quote if meme fails
-        return fetch('https://api.quotable.io/random')
+        return fetch('https://v1.hitokoto.cn/')
           .then(response => response.json())
           .then(data => {
             quoteData.value = {
-              content: data.content,
-              author: data.author
+              content: data.hitokoto,
+              author: `${data.from ? `${data.from == '原创' ? '原创' : '《' + data.from + '》'}`:'Unknown'} ${data.from_who ? `by ${data.from_who}` : ''}`.trim(),
             }
           })
       })
@@ -151,12 +157,12 @@ function showQuote() {
     return
   }
 
-  fetch('https://api.quotable.io/random')
+  fetch('https://v1.hitokoto.cn/')
     .then(response => response.json())
     .then(data => {
       quoteData.value = {
-        content: data.content,
-        author: data.author
+        content: data.hitokoto,
+        author: `${data.from ? `${data.from == '原创' ? '原创' : '《' + data.from + '》'}`:'Unknown'} ${data.from_who ? `by ${data.from_who}` : ''}`.trim(),
       }
     })
     .catch(error => {
@@ -224,16 +230,16 @@ function animateBug(bug) {
   const animate = () => {
     const bugRef = bugs.value.find(b => b.id === bug.id)
     if (!bugRef) return
-    
+
     // 如果虫子被 hover，则停止移动
     if (!bugRef.isHovered) {
       // 更新位置
       bugRef.x += bugRef.directionX * bugRef.speed
       bugRef.y += bugRef.directionY * bugRef.speed
-      
+
       // 计算朝向角度（根据移动方向），额外顺时针旋转90度
       bugRef.rotation = Math.atan2(bugRef.directionY, bugRef.directionX) * (180 / Math.PI) + 90
-      
+
       // 边界检测
       if (bugRef.x < 0 || bugRef.x > window.innerWidth) {
         bugRef.directionX *= -1
@@ -243,17 +249,17 @@ function animateBug(bug) {
         bugRef.directionY *= -1
         bugRef.y = Math.max(0, Math.min(window.innerHeight, bugRef.y))
       }
-      
+
       // 随机改变方向
       if (rng.next() < 0.01) {
         bugRef.directionX = (rng.next() - 0.5) * 2
         bugRef.directionY = (rng.next() - 0.5) * 2
       }
     }
-    
+
     // 强制触发响应式更新
     bugs.value = [...bugs.value]
-    
+
     requestAnimationFrame(animate)
   }
   animate()
@@ -273,16 +279,16 @@ function generateMask() {
   if (!glowVisible.value && !glowAttached.value) {
     return 'radial-gradient(circle at 50% 50%, transparent 0%, black 0%)'
   }
-  
+
   const x = glowPos.value.x
   const y = glowPos.value.y
   const size = glowAttached.value ? 140 : 140 * glowScale.value
   const opacity = glowAttached.value ? controlGlowOpacity.value : glowOpacity.value
-  
+
   if (opacity === 0) {
     return 'radial-gradient(circle at 50% 50%, transparent 0%, black 0%)'
   }
-  
+
   return `radial-gradient(circle ${size}px at ${x}px ${y}px, transparent 0%, black 100%)`
 }
 
@@ -305,7 +311,7 @@ onUnmounted(() => {
     <button @click="toggleLights" class="lights-toggle" style="cursor:pointer">
       {{ lightsOff ? '\u005f\u0070\u6f00' : '\u0051\u7370\u6f00' }}
     </button>
-    
+
     <!-- 暗色遮罩层 -->
     <transition name="fade">
       <div v-if="lightsOff" class="dark-overlay">
@@ -316,31 +322,27 @@ onUnmounted(() => {
         }"></div>
       </div>
     </transition>
-    
+
     <!-- 虫子图层 -->
     <transition name="fade">
       <div v-if="lightsOff" class="bug-layer">
-        <div v-for="bug in bugs" :key="bug.id" 
-             class="bug"
-             @click="removeBug(bug)"
-             @mouseenter="bug.isHovered = true"
-             @mouseleave="bug.isHovered = false"
-             :style="{
-               left: bug.x + 'px',
-               top: bug.y + 'px',
-               transform: bug.isSmile 
-                 ? 'translate(-50%, -50%)' 
-                 : `translate(-50%, -50%) rotate(${bug.rotation}deg)`
-             }">
+        <div v-for="bug in bugs" :key="bug.id" class="bug" @click="removeBug(bug)" @mouseenter="bug.isHovered = true"
+          @mouseleave="bug.isHovered = false" :style="{
+            left: bug.x + 'px',
+            top: bug.y + 'px',
+            transform: bug.isSmile
+              ? 'translate(-50%, -50%)'
+              : `translate(-50%, -50%) rotate(${bug.rotation}deg)`
+          }">
           {{ bug.emoji }}
         </div>
       </div>
     </transition>
-    
+
     <a href="https://github.com/vanvanhasnophi" target="_blank" class="glowable">
       <img src="/avatar.png" class="avatar" alt="Avatar" />
     </a>
-    
+
     <div v-show="glowVisible && !glowAttached" class="glow" :style="{
       left: glowPos.x + 'px',
       top: glowPos.y + 'px',
@@ -350,24 +352,26 @@ onUnmounted(() => {
   </div style="">
   <ProfileContent name="Vincent Chen 陈宇凡" mail1="j13811593@163.com" mail2="chenyufa23@mails.tsinghua.edu.cn" />
   <div style="text-align: center; margin: 2em;">
-  <a href="./blog" >
-  <button class="primary">Blogs →</button>
-  </a>
-  
-  <transition name="fade" mode="out-in">
-    <div v-if="quoteData" style="margin-left: 1em; display: inline-block; vertical-align: middle; max-width: 600px; text-align: left;">
-      <template v-if="quoteData.imageUrl">
-        <img :src="quoteData.imageUrl" style="max-width: 100%; max-height: 300px; border-radius: 8px; display: block; margin-bottom: 0.5em;" />
-        <span style="opacity: 0.7; font-size: 0.9em;">{{ quoteData.content }} — {{ quoteData.author }}</span>
-      </template>
-      <template v-else>
-        "{{ quoteData.content }}" <br> <span style="opacity: 0.7; font-size: 0.9em;">— {{ quoteData.author }}</span>
-      </template>
-    </div>
-    <button v-else style="margin-left: 1em;" @click="showQuote" :disabled="isLoadingQuote">
-      {{ isLoadingQuote ? 'Loading...' : 'Quote Me' }}
-    </button>
-  </transition>
+    <a href="./blog">
+      <button class="primary">Blogs →</button>
+    </a>
+
+    <transition name="fade" mode="out-in">
+      <div v-if="quoteData"
+        style="margin-left: 1em; display: inline-block; vertical-align: middle; max-width: 600px; text-align: left;">
+        <template v-if="quoteData.imageUrl">
+          <img :src="quoteData.imageUrl"
+            style="max-width: 100%; max-height: 300px; border-radius: 8px; display: block; margin-bottom: 0.5em;" />
+          <span style="opacity: 0.7; font-size: 0.9em;">{{ quoteData.content }} — {{ quoteData.author }}</span>
+        </template>
+        <template v-else>
+          "{{ quoteData.content }}" <br> <span style="opacity: 0.7; font-size: 0.9em;">— {{ quoteData.author }}</span>
+        </template>
+      </div>
+      <button v-else style="margin-left: 1em;" @click="showQuote" :disabled="isLoadingQuote">
+        {{ isLoadingQuote ? 'Loading...' : 'Quote Me' }}
+      </button>
+    </transition>
   </div>
 </template>
 
@@ -435,13 +439,18 @@ onUnmounted(() => {
 }
 
 /* 淡入淡出过渡效果 */
-.fade-enter-active, .fade-leave-active {
+.fade-enter-active,
+.fade-leave-active {
   transition: opacity 0.5s ease;
 }
-.fade-enter-from, .fade-leave-to {
+
+.fade-enter-from,
+.fade-leave-to {
   opacity: 0;
 }
-.fade-enter-to, .fade-leave-from {
+
+.fade-enter-to,
+.fade-leave-from {
   opacity: 1;
 }
 
@@ -495,4 +504,3 @@ onUnmounted(() => {
   filter: blur(30px);
 }
 </style>
-
